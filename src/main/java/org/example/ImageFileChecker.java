@@ -14,7 +14,7 @@ public class ImageFileChecker {
     private static final List<String> IMAGE_EXTENSIONS = Arrays.asList("jpg", "jpeg", "png", "gif", "bmp");
 
     public static void main(String[] args) {
-        File rootDir = new File("C:\\ImagesFolder\\");
+        File rootDir = new File("C:\\Images\\");
         processFiles(rootDir);
     }
 
