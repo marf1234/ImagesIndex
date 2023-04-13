@@ -1,20 +1,33 @@
 package org.example;
 
+import net.coobird.thumbnailator.Thumbnails;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 
 public class ImageFinderAndCopier {
-
     public static void main(String[] args) throws IOException {
-        String sourceDirPath = "C:\\Images\\";
-        String destDirPath = "C:\\Images2\\";
-        List<String> imageExtensions = Arrays.asList("jpg", "jpeg", "png", "gif"); // список расширений изображений
+
+        FileInputStream propertyLoaderStream;
+        Properties property = new Properties();
+
+
+        propertyLoaderStream = new FileInputStream("src/main/resources/config.property");
+        property.load(propertyLoaderStream);
+
+        String sourceDirPath = property.getProperty("sourceDirPath");
+        String destDirPath = property.getProperty("destDirPath");
+        String extensionString = property.getProperty("imageAvailableExtensions");
+        List<String> imageExtensions = new ArrayList<>(Arrays.asList(extensionString.split(",")));
 
         // Создаем объекты директорий и проверяем их существование, создавая их при необходимости
         File sourceDir = new File(sourceDirPath);
@@ -29,10 +42,10 @@ public class ImageFinderAndCopier {
         }
 
         // Запускаем рекурсивный метод поиска и копирования изображений
-        copyImages(sourceDir, destDir, imageExtensions);
+        copyImages(sourceDir, destDir, imageExtensions, 10.0f);
     }
 
-    private static void copyImages(File sourceDir, File destDir, List<String> imageExtensions) throws IOException {
+    private static void copyImages(File sourceDir, File destDir, List<String> imageExtensions, float compression) throws IOException {
         // Получаем список файлов и директорий в исходной директории
         File[] files = sourceDir.listFiles();
 
@@ -49,19 +62,26 @@ public class ImageFinderAndCopier {
                 if (!newDestDir.exists() && !newDestDir.mkdir()) {
                     throw new IOException("Failed to create destination subdirectory");
                 }
-                copyImages(file, newDestDir, imageExtensions);
+                copyImages(file, newDestDir, imageExtensions, compression);
             } else {
                 // Если это файл, то проверяем его расширение на соответствие изображению
                 String extension = getFileExtension(file);
                 if (imageExtensions.contains(extension)) {
-                    // Если расширение соответствует, то копируем файл в новую директорию с сохранением структуры исходной директории
-                    Path sourceFilePath = file.toPath();
-                    Path destFilePath = new File(destDir, sourceDir.toPath().relativize(sourceFilePath).toString()).toPath();
-                    Files.copy(sourceFilePath, destFilePath, StandardCopyOption.REPLACE_EXISTING);
+                    // Если расширение соответствует, то загружаем изображение и сжимаем его
+                    BufferedImage image = ImageIO.read(file);
+                    if (image != null) {
+                        // Сжимаем изображение с заданным коэффициентом
+                        BufferedImage compressedImage = Thumbnails.of(image).scale(1f / compression).asBufferedImage();
+                        // Сохраняем сжатое изображение в новую директорию с сохранением структуры исходной директории
+                        Path sourceFilePath = file.toPath();
+                        Path destFilePath = new File(destDir, sourceDir.toPath().relativize(sourceFilePath).toString()).toPath();
+                        ImageIO.write(compressedImage, extension, destFilePath.toFile());
+                    }
                 }
             }
         }
     }
+
 
     private static String getFileExtension(File file) {
         String fileName = file.getName();

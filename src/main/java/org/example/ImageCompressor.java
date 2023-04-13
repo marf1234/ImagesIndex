@@ -19,7 +19,7 @@ public class ImageCompressor {
             File output = new File("D:\\compressedImage.jpg");
 
             // Настройка параметров сжатия
-            float quality = 0.1f; // Качество изображения (от 0.0 до 1.0)
+            float quality = 0.001f; // Качество изображения (от 0.0 до 1.0)
 
             // Сжатие изображения и запись его в файл
             ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
@@ -38,4 +38,3 @@ public class ImageCompressor {
         }
     }
 }
-
